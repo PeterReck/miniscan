@@ -39,13 +39,13 @@ gonative:
 	cd gonative && \
 	export GOPATH=$$(pwd) && \
 	go get github.com/calmh/gonative && \
-	go get github.com/mitchellh/gox && \
 	bin/gonative -version=1.3.3 -platforms='windows_386 linux_amd64 darwin_amd64 windows_amd64'
 
-go_build: gonative
+go_build:
 	cd go && \
-	export GOPATH=$$(pwd) && \
-	../gonative/bin/gox -osarch='windows/amd64 windows/386 linux/amd64 darwin/amd64' github.com/sttts/miniscan
+	export GOPATH=$$(pwd) && export PATH=$$GOPATH/bin:$$PATH && \
+	go get github.com/mitchellh/gox && \
+	gox -osarch='windows/amd64 windows/386 linux/amd64 darwin/amd64' github.com/sttts/miniscan
 
 build/miniscan.exe: build go_build
 	cp go/miniscan_windows_386.exe build/miniscan.exe
