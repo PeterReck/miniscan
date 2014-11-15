@@ -1,6 +1,6 @@
 all: build build/nmap.exe build/nmap build/miniscan.exe build/miniscan64.exe build/linux-miniscan build/mac-miniscan
 
-WIN32_VERSION := 6.47
+WIN32_VERSION := 5.50
 
 # everything later has a libsvn_client dependency due to nmap-update
 LINUX_VERSION := 5.51.3-1
@@ -21,7 +21,7 @@ clean:
 $(WIN32_ZIP): 
 	wget http://nmap.org/dist/$(WIN32_ZIP)
 build/nmap.exe: $(WIN32_ZIP)
-	unzip -d build -j $(WIN32_ZIP) nmap-$(WIN32_VERSION)/nmap.exe
+	unzip -d build -j $(WIN32_ZIP) nmap-$(WIN32_VERSION)/nmap.exe nmap-$(WIN32_VERSION)/libeay32.dll nmap-$(WIN32_VERSION)/ssleay32.dll
 	touch build/nmap.exe
 
 $(LINUX_RPM):
