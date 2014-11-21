@@ -31,6 +31,8 @@ func scan_hosts(hosts []string, tcpPorts []uint, udpPorts []uint) (map[string]sc
 		method_args := []string{}
 		if use_syn_scan {
 			method_args = append(method_args, "-sS")	
+		} else {
+			method_args = append(method_args, "-sT", "--unprivileged")
 		}
 		report, err := scan(hosts, tcpPorts, method_args)
 		if err != nil  {
