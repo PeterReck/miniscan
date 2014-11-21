@@ -18,7 +18,7 @@ type Profile struct {
 
 type Environment struct {
 	name string
-	profiles []*Profile
+	hosts_per_profile map[string][]string
 }
 
 type Config struct {
@@ -33,7 +33,10 @@ func read_config(file_name string) (*Config, error) {
 		return nil, err
 	}
 	
-	config := Config{profiles: make(map[string]Profile)}
+	config := Config{
+		profiles: make(map[string]Profile),
+		environments: map[string]Environment{},
+	}
 	read_profiles, err := read_config.SectionOptions("profiles")
 	if err != nil {
 		log.Println(err.Error())
@@ -78,27 +81,27 @@ func read_config(file_name string) (*Config, error) {
 	// parse environments
 	for _, section_name := range read_config.Sections() {
 		if section_name != "profiles" {
-			host_names, _ := read_config.SectionOptions(section_name)
-			for _, host_name := range host_names {
-				s, _ := read_config.String(section_name, host_name)
+			profile_names, _ := read_config.SectionOptions(section_name)
+			hosts_per_profile := map[string][]string{}
+			for _, profile_name := range profile_names {
+				// check profile
+				_, found := config.profiles[profile_name]
+				if !found {
+					return nil, errors.New(fmt.Sprintf("Invalid profile '%s' in environment '%s'", profile_name, section_name))
+				}
+				
+				// split hosts
+				s, _ := read_config.String(section_name, profile_name)
 				s = strings.Replace(s, ";", " ", -1)
 				s = strings.Replace(s, ",", " ", -1)
 				s = strings.Replace(s, "\n", " ", -1)
-				profile_names := strings.Split(s, " ")
-				profiles := make([]*Profile, 10)
-				for _, profile_name := range profile_names {
-					profile, found := config.profiles[profile_name]
-					if found {
-						return nil, errors.New(fmt.Sprintf("Invalid profile '%s' in host '%s' of environment '%s'", 
-								profile_name, host_name, section_name))
-					}
-					profiles = append(profiles, &profile)
-				}
-				
-				config.environments[section_name] = Environment{
-					name: section_name,
-					profiles: profiles,		
-				}
+				host_names := strings.Split(s, " ")
+				hosts_per_profile[profile_name] = host_names
+			}
+			
+			config.environments[section_name] = Environment{
+				name: section_name,
+				hosts_per_profile: hosts_per_profile,
 			}
 		}
 	}

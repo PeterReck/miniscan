@@ -7,7 +7,7 @@ import (
 	"os"
 	"io/ioutil"	
 	"strings"	
-	"github.com/sttts/nmapr"	
+	"github.com/sttts/nmapr"
 )
 
 func scan(hosts []string, ports []uint, method_args []string) (*nmapr.Report, error) {
@@ -24,16 +24,18 @@ func scan(hosts []string, ports []uint, method_args []string) (*nmapr.Report, er
 	args = append(args, method_args...)
 	args = append(args, "-n", "-oX", temp_file.Name())
 	args = append(args, hosts...)
-			
+	
 	// execute nmap
-	log.Println("Exec: nmap " + strings.Join(args, " "))
+	if (verbose || debug) {
+		log.Println("Exec: nmap " + strings.Join(args, " "))
+	}
 	output, err := exec.Command("nmap", args...).CombinedOutput()
+	if verbose || debug || err != nil {
+		log.Println("Output:\n" + string(output[:]))
+	}
 	if err != nil {
 		log.Println(err.Error())
 		return nil, err
-	}
-	if verbose || debug {
-		log.Println("Output:\n" + string(output[:]))
 	}
 	
 	// print xml output?
