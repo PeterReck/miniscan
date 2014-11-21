@@ -80,7 +80,7 @@ func udp_state_color(state string, format string, v ...interface{}) (msg color.C
 	return color.BrYellow(format, v...)	
 }
 
-func print_scanned_hosts(scanned_hosts map[string]scanned_host) {
+func print_scanned_hosts(scanned_hosts map[string]scanned_host, explanation string) {
 	for _, sh := range scanned_hosts {
 		args := [](interface{}){ sh.name + ": " }
 		for _, sp := range sh.tcp_ports {
@@ -88,6 +88,9 @@ func print_scanned_hosts(scanned_hosts map[string]scanned_host) {
 		}
 		for _, sp := range sh.udp_ports {
 			args = append(args, udp_state_color(sp.state, "u%d=%s ", sp.port, sp.state))
+		}
+		if (explanation!="") {
+			args = append(args, color.White("(" + explanation + ")"))
 		}
 		color.Println(args...)
 	}
@@ -155,7 +158,7 @@ func main() {
     			if (err != nil) {
     				color.Println(color.Red(err.Error()))
     			}
-    			print_scanned_hosts(scanned_hosts)
+    			print_scanned_hosts(scanned_hosts, profile_name)
     		}
     	}
     } else {
@@ -168,6 +171,6 @@ func main() {
 			color.Println(color.Red(err.Error()))
 			os.Exit(1)
 		}
-		print_scanned_hosts(scanned_hosts)
+		print_scanned_hosts(scanned_hosts, "")
 	}	
 }
