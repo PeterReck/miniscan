@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
 	"fmt"
 	"os/exec"
 	"os"
 	"io/ioutil"	
 	"strings"	
 	"github.com/sttts/nmapr"
+	"github.com/sttts/color"
 )
 
 func scan(hosts []string, ports []uint, method_args []string) (*nmapr.Report, error) {
@@ -27,21 +27,21 @@ func scan(hosts []string, ports []uint, method_args []string) (*nmapr.Report, er
 	
 	// execute nmap
 	if (verbose || debug) {
-		log.Println("Exec: nmap " + strings.Join(args, " "))
+		color.Println(color.White("Exec: nmap " + strings.Join(args, " ")))
 	}
 	output, err := exec.Command("nmap", args...).CombinedOutput()
 	if verbose || debug || err != nil {
-		log.Println("Output:\n" + string(output[:]))
+		color.Println(color.White("Output:\n" + string(output[:])))
 	}
 	if err != nil {
-		log.Println(err.Error())
+		color.Println(color.White(err.Error()))
 		return nil, err
 	}
 	
 	// print xml output?
 	if debug {
 		xml_string, _ := ioutil.ReadFile(temp_file.Name())
-		log.Println("XML Output:\n" + string(xml_string[:]))
+		color.Println(color.White("XML Output:\n" + string(xml_string[:])))
 	}
 	
 	// parse xml output

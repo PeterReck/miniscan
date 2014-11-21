@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-	"log"
 	"os"
+	"github.com/sttts/color"
 )
-
 
 func scan_hosts(hosts []string, tcpPorts []uint, udpPorts []uint) (map[string]scanned_host, error) {
     // pre-fill scanned_hosts with all ports of unknown state
@@ -62,16 +60,36 @@ func scan_hosts(hosts []string, tcpPorts []uint, udpPorts []uint) (map[string]sc
 	return scanned_hosts, nil
 }
 
+func tcp_state_color(state string, format string, v ...interface{}) (msg color.ColorMsg) {
+	switch state {
+		case "open":
+			return color.BrGreen(format, v...)
+		case "closed":
+			return color.BrRed(format, v...)
+	}
+	return color.BrYellow(format, v...)	
+}
+
+func udp_state_color(state string, format string, v ...interface{}) (msg color.ColorMsg) {
+	switch state {
+		case "open", "open|filtered":
+			return color.BrGreen(format, v...)
+		case "closed":
+			return color.BrRed(format, v...)
+	}
+	return color.BrYellow(format, v...)	
+}
+
 func print_scanned_hosts(scanned_hosts map[string]scanned_host) {
 	for _, sh := range scanned_hosts {
-		s := ""
+		args := [](interface{}){ sh.name + ": " }
 		for _, sp := range sh.tcp_ports {
-			s = s + fmt.Sprintf("%d=%s ", sp.port, sp.state)
+			args = append(args, tcp_state_color(sp.state, "%d=%s ", sp.port, sp.state))
 		}
 		for _, sp := range sh.udp_ports {
-			s = s + fmt.Sprintf("u%d=%s ", sp.port, sp.state)
+			args = append(args, udp_state_color(sp.state, "u%d=%s ", sp.port, sp.state))
 		}
-		println(sh.name + ": " + s)
+		color.Println(args...)
 	}
 }
 
@@ -85,7 +103,7 @@ func main() {
 
 	flag.Var(&tcpPorts, "p", "a TCP port")
 	flag.Var(&udpPorts, "u", "a UDP port")
-	flag_sS := flag.Bool("syn", false, "use syn tests (needs root priviledges)")
+	flag_syn := flag.Bool("syn", false, "use syn tcp tests (needs root priviledges)")
 	flag_v := flag.Bool("v", false, "print nmap output")
 	flag_d := flag.Bool("d", false, "print nmap xml output")
 	flag_conf := flag.String("conf", "", "load the given configuration file with profiles and environments")
@@ -94,11 +112,16 @@ func main() {
 	targets := flag.Args()
 	verbose = *flag_v
 	debug = *flag_d
-	use_syn_scan = *flag_sS
+	use_syn_scan = *flag_syn
 	
 	if (len(tcpPorts)==0 && len(udpPorts)==0 && *flag_conf=="") || len(targets)==0 {
+		if len(targets) > 0 {
+			color.Println(color.Red("Error: Either -p, -u or -conf is mandatory"))
+    	    println()
+    	}    
         flag.PrintDefaults()
     } else if (len(tcpPorts)>0 || len(udpPorts)>0) && *flag_conf!="" {
+    	color.Println(color.Red("Error: use port or configuration, not both"))
     	flag.PrintDefaults()
     } else if (*flag_conf!="") {
     	// targets are environments from here on
@@ -107,7 +130,7 @@ func main() {
     	// parse config file
     	config, err := read_config(*flag_conf)
     	if err!=nil {
-    		log.Fatal(err)
+    		color.Println(color.Red(err.Error()))
     		os.Exit(2)
     	}
     	
@@ -116,7 +139,7 @@ func main() {
     	for _, name := range environment_names {
     		env, found := config.environments[name]
 			if !found {
-				log.Fatal("environment " + name + " not found in configuration")
+				color.Println(color.Red("Error: environment " + name + " not found in configuration"))
 				os.Exit(2)
 			}
 			environments = append(environments, env)
@@ -130,7 +153,7 @@ func main() {
     			udpPorts := config.profiles[profile_name].udp_ports
 	    		scanned_hosts, err := scan_hosts(host_names, *tcpPorts, *udpPorts)
     			if (err != nil) {
-    				log.Println(err)
+    				color.Println(color.Red(err.Error()))
     			}
     			print_scanned_hosts(scanned_hosts)
     		}
@@ -142,7 +165,7 @@ func main() {
     	// pre-fill scanned_hosts with all ports of unknown state
     	scanned_hosts, err := scan_hosts(hosts, tcpPorts, udpPorts)
 		if err != nil  {
-			log.Fatal(err)
+			color.Println(color.Red(err.Error()))
 			os.Exit(1)
 		}
 		print_scanned_hosts(scanned_hosts)
