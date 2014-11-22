@@ -5,10 +5,12 @@ A minimal port scanner for TCP and UDP port lists and network environments
 
 It support two calling modes:
 - with a port list and a number of hosts
-![](doc/ports.png)
+ 
+  ![](doc/ports.png)
 
 - with a configuration file defining server profiles and network environments:
-![](doc/config.png)
+  
+  ![](doc/config.png)
 
 The configuration looks like this:
 
