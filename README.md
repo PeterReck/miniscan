@@ -27,6 +27,19 @@ domain=192.168.2.1,8.8.8.8,8.8.4.4
 ldap=192.168.2.4
 ```
 
+The command line arguments are the following:
+
+```
+$ bin/miniscan --help
+Usage of bin/miniscan:
+  -conf="": load the given configuration file with profiles and environments
+  -d=false: print nmap xml output
+  -p=[]: a TCP port
+  -syn=false: use syn tcp tests (needs root priviledges)
+  -u=[]: a UDP port
+  -v=false: print nmap output
+```
+
 Development
 -----------
 
