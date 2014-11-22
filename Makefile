@@ -1,7 +1,8 @@
 all: build build/nmap.exe build/nmap build/miniscan.exe build/miniscan64.exe build/linux-miniscan build/mac-miniscan
 
-WIN32_VERSION := 5.50
+SHELL = /bin/bash
 
+WIN32_VERSION := 5.50
 # everything later has a libsvn_client dependency due to nmap-update
 LINUX_VERSION := 5.51.3-1
 
