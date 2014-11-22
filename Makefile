@@ -7,7 +7,7 @@ LINUX_VERSION := 5.51.3-1
 
 WIN32_ZIP = nmap-$(WIN32_VERSION)-win32.zip
 LINUX_RPM = nmap-$(LINUX_VERSION).x86_64.rpm
-RPM2CPIO=$(shell if which rpm2cpio.pl &>/dev/null; then echo rpm2cpio.pl; else echo rpm2cpio; fi)
+RPM2CPIO=$(shell if which rpm2cpio &>/dev/null; then echo rpm2cpio; else echo rpm2cpio.pl; fi)
 
 .PHONY: go_build clean
 
