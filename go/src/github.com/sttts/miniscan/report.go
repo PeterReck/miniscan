@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"github.com/sttts/nmapr"
 )
 
@@ -54,5 +52,10 @@ func report_to_scanned_ports(scan_host string, report *nmapr.Report, scanned_por
 		}
 	}
 	
-	log.Println(fmt.Sprintf("Cannot find %s in nmap XML report", scan_host))
+	for port, _ := range scanned_ports {
+		scanned_ports[port] = scanned_port{
+			port: port,
+			state: "down",
+		}
+	}
 }

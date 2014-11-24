@@ -64,7 +64,7 @@ func tcp_state_color(state string, format string, v ...interface{}) (msg color.C
 	switch state {
 		case "open":
 			return color.BrGreen(format, v...)
-		case "closed":
+		case "closed", "down":
 			return color.BrRed(format, v...)
 	}
 	return color.BrYellow(format, v...)	
@@ -74,7 +74,7 @@ func udp_state_color(state string, format string, v ...interface{}) (msg color.C
 	switch state {
 		case "open", "open|filtered":
 			return color.BrGreen(format, v...)
-		case "closed":
+		case "closed", "down":
 			return color.BrRed(format, v...)
 	}
 	return color.BrYellow(format, v...)	
