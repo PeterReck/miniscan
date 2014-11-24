@@ -4,6 +4,7 @@ dependencies:
     - sudo apt-get install -y rpm2cpio ruby1.9.1 ruby1.9.1-dev rubygems1.9.1 irb1.9.1 ri1.9.1 rdoc1.9.1
     - sudo update-alternatives --install /usr/bin/ruby ruby /usr/bin/ruby1.9.1 400
     - sudo gem install dpl
+    - sudo gem contents dpl
 
 test:
   pre:
