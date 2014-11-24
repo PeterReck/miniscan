@@ -11,13 +11,15 @@ test:
 
     - |
       set -xe
+      git fetch
+
       RELEASE=$(date +%Y%m%d%H%M).$(git rev-parse --short HEAD)
       cat > release.json <<EOF
       {
           "tag_name": "v$RELEASE",
           "target_commitish": "$(git rev-parse HEAD)",
-          "name": "v$RELEASE",
-          "body": "$(git log --oneline -1 | sed "s/\"/'/g")",
+          "body": "$(git log $(git describe --tags --abbrev=0)..HEAD --oneline | sed ':a;N;$!ba;s/\n/\\n/g')",
+          "name": "$(git log --oneline -1 | sed "s/\"/'/g")",
           "draft": true,
           "prerelease": false
       }
