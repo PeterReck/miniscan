@@ -10,9 +10,8 @@ test:
     - RELEASE=0.5.$(date +%Y%m%d%H%M).$(git rev-parse --short HEAD)
     - cp build/miniscan.zip build/miniscan.tar.gz $CIRCLE_ARTIFACTS
     - >
-      curl -i -f 
+      curl -i -f -X POST
       -H "Authorization: token ad31e1db441ece16ed378be4b37f5fc9370f7986"
-      -H "Accept: application/vnd.github.manifold-preview"
       -H "Content-Type: application/zip"
       --data-binary @build/miniscan.zip
       "https://uploads.github.com/repos/sttts/miniscan/releases/$RELEASE/assets?name=minizip-$VERSION.zip"
