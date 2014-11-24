@@ -1,10 +1,7 @@
 dependencies:
   pre:
     - sudo apt-get update
-    - sudo apt-get install -y rpm2cpio ruby1.9.1 ruby1.9.1-dev rubygems1.9.1 irb1.9.1 ri1.9.1 rdoc1.9.1
-    - sudo update-alternatives --install /usr/bin/ruby ruby /usr/bin/ruby1.9.1 400
-    - sudo gem install dpl
-    - sudo gem contents dpl
+    - sudo apt-get install -y rpm2cpio
 
 test:
   pre:
@@ -12,5 +9,9 @@ test:
   post:
     - RELEASE=0.5.$(date +%Y%m%d%H%M).$(git rev-parse --short HEAD)
     - cp build/miniscan.zip build/miniscan.tar.gz $CIRCLE_ARTIFACTS
-    - dpl --provider=releases --api-key=ad31e1db441ece16ed378be4b37f5fc9370f7986 --file=build/miniscan.zip --repo=miniscan --release-number=$RELEASE
-    - dpl --provider=releases --api-key=ad31e1db441ece16ed378be4b37f5fc9370f7986 --file=build/miniscan.tar.gz --repo=miniscan --release-number=$RELEASE
+    - >
+      curl -H "Authorization: token ad31e1db441ece16ed378be4b37f5fc9370f7986"
+      -H "Accept: application/vnd.github.manifold-preview"
+      -H "Content-Type: application/zip"
+      --data-binary @build/miniscan.zip
+      "https://uploads.github.com/repos/sttts/miniscan/releases/$RELEASE/assets?name=minizip-$VERSION.zip"
