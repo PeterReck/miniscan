@@ -1,4 +1,4 @@
-all: build build/nmap.exe build/nmap build/miniscan.exe build/miniscan64.exe build/linux-miniscan build/mac-miniscan
+all: build build/nmap.exe build/nmap build/miniscan.exe build/miniscan64.exe build/miniscan build/miniscan64 build/mac-miniscan build/miniscan.zip build/miniscan.tar.gz
 
 SHELL = /bin/bash
 
@@ -49,14 +49,29 @@ go_build:
 	go get github.com/mitchellh/gox && \
 	gox -osarch='windows/amd64 windows/386 linux/amd64 darwin/amd64' github.com/sttts/miniscan
 
+build/example.conf: example.conf
+	cp example.conf build
+
+build/README.txt: README.md
+	cp README.md build/README.txt
+
+build/miniscan.zip: build build/miniscan.exe build/miniscan64.exe build/nmap.exe build/example.conf build/README.txt
+	cd build && zip miniscan.zip nmap.exe miniscan*.exe *.dll *.conf README.txt
+
+build/miniscan.tar.gz: build build/miniscan64 build/nmap build/example.conf
+	cd build && tar -cvzf miniscan.tar.gz miniscan64 nmap example.conf README.txt
+
 build/miniscan.exe: build go_build
 	cp go/miniscan_windows_386.exe build/miniscan.exe
 
 build/miniscan64.exe: build go_build
 	cp go/miniscan_windows_amd64.exe build/miniscan64.exe
 
-build/linux-miniscan: build go_build
-	cp go/miniscan_linux_amd64 build/linux-miniscan
+build/miniscan: build go_build
+	cp go/miniscan_linux_386 build/miniscan
+
+build/miniscan64: build go_build
+	cp go/miniscan_linux_amd64 build/miniscan64
 
 build/mac-miniscan: build go_build
 	cp go/miniscan_darwin_amd64 build/mac-miniscan
