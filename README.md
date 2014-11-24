@@ -43,15 +43,9 @@ Usage of bin/miniscan:
 Development
 -----------
 
+In the root directory, there is a Makefile which downloads everything
+necessary and builds the binaries:
+
+```
 make
-
-mkdir gonative
-cd gonative
-export GOPATH=$(pwd)
-export PATH=$GOPATH/bin:$PATH
-go get github.com/calmh/gonative
-go get github.com/mitchellh/gox
-
-cd ../go
-export GOPATH=$(pwd)
-gox github.com/sttts/miniscan
+```
