@@ -6,3 +6,5 @@ dependencies:
 test:
   pre:
     - make
+  post:
+    - cp build/miniscan.zip build/miniscan.tar.gz $CIRCLE_ARTIFACTS
