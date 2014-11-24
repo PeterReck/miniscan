@@ -28,7 +28,7 @@ build/nmap.exe: $(WIN32_ZIP)
 $(LINUX_RPM):
 	wget http://nmap.org/dist/$(LINUX_RPM)
 build/nmap: $(LINUX_RPM)
-	$(RPM2CPIO) $(LINUX_RPM) | cpio -ivd usr/bin/nmap
+	$(RPM2CPIO) $(LINUX_RPM) | cpio -ivd ./usr/bin/nmap
 	mv usr/bin/nmap build
 	rmdir usr/bin usr
 
