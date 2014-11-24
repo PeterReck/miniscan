@@ -8,15 +8,35 @@ test:
     - make
   post:
     - cp build/miniscan.zip build/miniscan.tar.gz $CIRCLE_ARTIFACTS
-    - >
-      RELEASE=0.5.$(date +%Y%m%d%H%M).$(git rev-parse --short HEAD)
-      curl -i -f -X POST
-      -H "Authorization: token ad31e1db441ece16ed378be4b37f5fc9370f7986"
-      -H "Content-Type: application/zip"
-      --data-binary @build/miniscan.zip
-      "https://uploads.github.com/repos/sttts/miniscan/releases/$RELEASE/assets?name=minizip-$RELEASE.zip" &&
-      curl -i -f -X POST
-      -H "Authorization: token ad31e1db441ece16ed378be4b37f5fc9370f7986"
-      -H "Content-Type: application/gzip"
-      --data-binary @build/miniscan.tar.gz
-      "https://uploads.github.com/repos/sttts/miniscan/releases/$RELEASE/assets?name=minizip-$RELEASE.tar.gz"
+
+    - |
+      set -xe
+      RELEASE=$(date +%Y%m%d%H%M).$(git rev-parse --short HEAD)
+      cat > release.json <<EOF
+      {
+          "tag_name": "v$RELEASE",
+          "target_commitish": "$(git rev-parse HEAD)",
+          "name": "v$RELEASE",
+          "body": "$(git log --oneline -1 | sed "s/\"/'/g")",
+          "draft": true,
+          "prerelease": false
+      }
+      EOF
+      cat release.json
+
+      curl -v -D /dev/stderr -s -f -o response -X POST -H "Content-Type: application/json"g -d @release.json \
+        -H "Authorization: token ad31e1db441ece16ed378be4b37f5fc9370f7986" \
+        "https://api.github.com/repos/sttts/miniscan/releases"
+      PUBLISH_URL=$(python -c "import json,sys;j=json.load(sys.stdin);print j['upload_url'].split('{')[0]" < response)
+
+      curl -i -f -X POST \
+        -H "Authorization: token ad31e1db441ece16ed378be4b37f5fc9370f7986" \
+        -H "Content-Type: application/zip" \
+        --data-binary @build/miniscan.zip \
+        "$PUBLISH_URL?name=minizip-$RELEASE.zip"
+
+      curl -i -f -X POST \
+        -H "Authorization: token ad31e1db441ece16ed378be4b37f5fc9370f7986" \
+        -H "Content-Type: application/gzip" \
+        --data-binary @build/miniscan.tar.gz \
+        "$PUBLISH_URL?name=minizip-$RELEASE.tar.gz"
