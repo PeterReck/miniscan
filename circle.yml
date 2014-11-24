@@ -19,7 +19,7 @@ test:
           "tag_name": "v$RELEASE",
           "target_commitish": "$(git rev-parse HEAD)",
           "body": "$(git log $(git describe --tags --abbrev=0)..HEAD --oneline | sed ':a;N;$!ba;s/\n/\\n/g')",
-          "name": "$(git log --oneline -1 | sed "s/\"/'/g")",
+          "name": "v0.x.0",
           "draft": true,
           "prerelease": false
       }
