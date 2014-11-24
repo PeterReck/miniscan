@@ -7,11 +7,16 @@ test:
   pre:
     - make
   post:
-    - RELEASE=0.5.$(date +%Y%m%d%H%M).$(git rev-parse --short HEAD)
     - cp build/miniscan.zip build/miniscan.tar.gz $CIRCLE_ARTIFACTS
     - >
+      RELEASE=0.5.$(date +%Y%m%d%H%M).$(git rev-parse --short HEAD)
       curl -i -f -X POST
       -H "Authorization: token ad31e1db441ece16ed378be4b37f5fc9370f7986"
       -H "Content-Type: application/zip"
       --data-binary @build/miniscan.zip
-      "https://uploads.github.com/repos/sttts/miniscan/releases/$RELEASE/assets?name=minizip-$VERSION.zip"
+      "https://uploads.github.com/repos/sttts/miniscan/releases/$RELEASE/assets?name=minizip-$RELEASE.zip" &&
+      curl -i -f -X POST
+      -H "Authorization: token ad31e1db441ece16ed378be4b37f5fc9370f7986"
+      -H "Content-Type: application/gzip"
+      --data-binary @build/miniscan.tar.gz
+      "https://uploads.github.com/repos/sttts/miniscan/releases/$RELEASE/assets?name=minizip-$RELEASE.tar.gz"
