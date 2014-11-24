@@ -2,9 +2,13 @@ dependencies:
   pre:
     - sudo apt-get update
     - sudo apt-get install -y rpm2cpio
+    - sudo gem install dpl
 
 test:
   pre:
     - make
   post:
+    - RELEASE=0.5.$(date +%Y%m%d%H%M).$(git rev-parse --short HEAD)
     - cp build/miniscan.zip build/miniscan.tar.gz $CIRCLE_ARTIFACTS
+    - dpl --provider=releases --api-key=ad31e1db441ece16ed378be4b37f5fc9370f7986 --file=build/miniscan.zip --repo=miniscan --release-number=$RELEASE
+    - dpl --provider=releases --api-key=ad31e1db441ece16ed378be4b37f5fc9370f7986 --file=build/miniscan.tar.gz --repo=miniscan --release-number=$RELEASE
