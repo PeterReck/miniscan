@@ -45,6 +45,7 @@ gonative:
 go_build:
 	cd go && \
 	export GOPATH=$$(pwd) && export PATH=$$GOPATH/bin:$$PATH && \
+	go get -fix github.com/sttts/miniscan && \
 	go get github.com/mitchellh/gox && \
 	gox -osarch='windows/amd64 windows/386 linux/amd64 darwin/amd64' github.com/sttts/miniscan
 
