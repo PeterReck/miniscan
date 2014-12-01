@@ -4,7 +4,13 @@ import (
 	"flag"
 	"os"
 	"github.com/sttts/color"
+	"fmt"
+	"sort"
 )
+
+var debug = false
+var verbose = false
+var use_syn_scan = false
 
 func scan_hosts(hosts []string, tcpPorts []uint, udpPorts []uint) (map[string]scanned_host, error) {
     // pre-fill scanned_hosts with all ports of unknown state
@@ -60,45 +66,70 @@ func scan_hosts(hosts []string, tcpPorts []uint, udpPorts []uint) (map[string]sc
 	return scanned_hosts, nil
 }
 
-func tcp_state_color(state string, format string, v ...interface{}) (msg color.ColorMsg) {
+func tcp_state_color(port uint, state string) (msg color.ColorMsg) {
+	long_s := fmt.Sprintf("%d=%s", port, state)
+	short_s := fmt.Sprintf("%d", port)
+	s := short_s
+	if verbose {
+		s = long_s
+	}
 	switch state {
 		case "open":
-			return color.BrGreen(format, v...)
+			return color.BrGreen(s)
 		case "closed", "down":
-			return color.BrRed(format, v...)
+			return color.BrRed(s)
 	}
-	return color.BrYellow(format, v...)	
+	return color.BrYellow(long_s)	
 }
 
-func udp_state_color(state string, format string, v ...interface{}) (msg color.ColorMsg) {
+func udp_state_color(port uint, state string) (msg color.ColorMsg) {
+	long_s := fmt.Sprintf("u%d=%s", port, state)
+	short_s := fmt.Sprintf("u%d", port)
+	s := short_s
+	if verbose {
+		s = long_s
+	}
 	switch state {
 		case "open", "open|filtered":
-			return color.BrGreen(format, v...)
+			return color.BrGreen(s)
 		case "closed", "down":
-			return color.BrRed(format, v...)
+			return color.BrRed(s)
 	}
-	return color.BrYellow(format, v...)	
+	return color.BrYellow(long_s)	
 }
 
 func print_scanned_hosts(scanned_hosts map[string]scanned_host, explanation string) {
 	for _, sh := range scanned_hosts {
 		args := [](interface{}){ sh.name + ": " }
-		for _, sp := range sh.tcp_ports {
-			args = append(args, tcp_state_color(sp.state, "%d=%s ", sp.port, sp.state))
+		
+		// print tcp ports
+		sorted_tcp_ports := make([]int, 0, len(sh.tcp_ports))
+		for p, _ := range sh.tcp_ports {
+			sorted_tcp_ports = append(sorted_tcp_ports, int(p))
 		}
-		for _, sp := range sh.udp_ports {
-			args = append(args, udp_state_color(sp.state, "u%d=%s ", sp.port, sp.state))
+		sort.Ints(sorted_tcp_ports)
+		for _, p := range sorted_tcp_ports {
+			sp := sh.tcp_ports[uint(p)]
+			args = append(args, tcp_state_color(sp.port, sp.state), " ")
 		}
+		
+		// print udp ports
+		sorted_udp_ports := make([]int, 0, len(sh.udp_ports))
+		for p, _ := range sh.udp_ports {
+   			sorted_udp_ports = append(sorted_udp_ports, int(p))
+		}
+		sort.Ints(sorted_udp_ports)
+		for _, p := range sorted_udp_ports {
+			sp := sh.udp_ports[uint(p)]
+			args = append(args, udp_state_color(sp.port, sp.state), " ")
+		}
+		
 		if (explanation!="") {
 			args = append(args, color.White("(" + explanation + ")"))
 		}
 		color.Println(args...)
 	}
 }
-
-var debug = false
-var verbose = false
-var use_syn_scan = false
 
 func main() {
 	var tcpPorts uintslice
