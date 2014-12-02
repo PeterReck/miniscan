@@ -10,7 +10,6 @@ import (
 
 var debug = false
 var verbose = false
-var short = false
 var use_syn_scan = false
 
 func scan_hosts(hosts []string, tcpPorts []uint, udpPorts []uint) (map[string]scanned_host, error) {
@@ -67,68 +66,111 @@ func scan_hosts(hosts []string, tcpPorts []uint, udpPorts []uint) (map[string]sc
 	return scanned_hosts, nil
 }
 
-func tcp_state_color(port uint, state string) (msg color.ColorMsg) {
-	long_s := fmt.Sprintf("%d=%s", port, state)
-	short_s := fmt.Sprintf("%d", port)
-	s := long_s
-	if short {
-		s = short_s
-	}
-	switch state {
-		case "open":
-			return color.BrGreen(s)
-		case "closed", "down":
-			return color.BrRed(s)
-	}
-	return color.BrYellow(long_s)	
+var OPEN_STATUS = map[string][]string {
+	"udp": []string {"open", "open|filtered"},
+	"tcp": []string {"open"},
 }
 
-func udp_state_color(port uint, state string) (msg color.ColorMsg) {
-	long_s := fmt.Sprintf("u%d=%s", port, state)
-	short_s := fmt.Sprintf("u%d", port)
-	s := long_s
-	if short {
-		s = short_s
+var CLOSED_STATUS = map[string][]string {
+	"udp": []string {"closed", "down"},
+	"tcp": []string {"closed", "down"},
+}
+
+func contains(s []string, e string) bool {
+    for _, a := range s { if a == e { return true } }
+    return false
+}
+
+func state_color(protocol string, port uint, state string) (msg color.ColorMsg) {
+	s := fmt.Sprintf("%d", port)
+	if contains(OPEN_STATUS[protocol], state) {
+		return color.BrGreen(s)
+	} else if contains(CLOSED_STATUS[protocol], state) {
+		return color.BrRed(s)
 	}
-	switch state {
-		case "open", "open|filtered":
-			return color.BrGreen(s)
-		case "closed", "down":
-			return color.BrRed(s)
-	}
-	return color.BrYellow(long_s)	
+	return color.BrYellow(s)	
 }
 
 func print_scanned_hosts(scanned_hosts map[string]scanned_host, explanation string) {
+	
+	color.Println(explanation + ":")
 	for _, sh := range scanned_hosts {
-		args := [](interface{}){ sh.name + ": " }
+		args := [](interface{}){ "  " + sh.name + ": " }
 		
-		// print tcp ports
+		// sort and check tcp ports
+		all_open := true
 		sorted_tcp_ports := make([]int, 0, len(sh.tcp_ports))
 		for p, _ := range sh.tcp_ports {
+			if ! contains(OPEN_STATUS["tcp"], sh.tcp_ports[p].state) { 
+				all_open = false
+			} 
 			sorted_tcp_ports = append(sorted_tcp_ports, int(p))
 		}
 		sort.Ints(sorted_tcp_ports)
-		for _, p := range sorted_tcp_ports {
-			sp := sh.tcp_ports[uint(p)]
-			args = append(args, tcp_state_color(sp.port, sp.state), " ")
-		}
 		
-		// print udp ports
+		// sort and check udp ports
 		sorted_udp_ports := make([]int, 0, len(sh.udp_ports))
 		for p, _ := range sh.udp_ports {
+			if ! contains(OPEN_STATUS["udp"], sh.udp_ports[p].state) { 
+				all_open = false
+			} 
    			sorted_udp_ports = append(sorted_udp_ports, int(p))
 		}
 		sort.Ints(sorted_udp_ports)
-		for _, p := range sorted_udp_ports {
-			sp := sh.udp_ports[uint(p)]
-			args = append(args, udp_state_color(sp.port, sp.state), " ")
-		}
 		
-		if (explanation!="") {
-			args = append(args, color.White("(" + explanation + ")"))
+		// print
+		if all_open {
+			// print a one-liner, all ports are open
+			for _, p := range sorted_tcp_ports {
+				sp := sh.tcp_ports[uint(p)]
+				args = append(args, color.BrGreen(fmt.Sprintf("%d", sp.port)), " ")
+			}
+			for _, p := range sorted_udp_ports {
+				sp := sh.udp_ports[uint(p)]
+				args = append(args, color.BrGreen(fmt.Sprintf("u%d", sp.port)), " ")
+			}
+			color.Println(args...)
+		} else {
+			//
+			// print multi-line, one line per state
+			//
+			color.Println(args...)
+			
+			// find states
+			used_states := map[string]bool{}
+			port_strings_by_state := make(map[string][](interface{}))
+			for _, p := range sorted_tcp_ports {
+				sp := sh.tcp_ports[uint(p)]
+				used_states[sp.state] = true
+			}
+			for _, p := range sorted_udp_ports {
+				sp := sh.udp_ports[uint(p)]
+				used_states[sp.state] = true
+			}
+			sorted_states := make([]string, 0)
+			for state, _ := range used_states {
+				sorted_states = append(sorted_states, state)
+			}
+			sort.Strings(sorted_states)
+			for _, state := range sorted_states {
+				empty_port_string_list := [](interface{}){"    ", state, ": "}
+				port_strings_by_state[state] = empty_port_string_list 
+			}
+			
+			// register ports for states
+			for _, p := range sorted_tcp_ports {
+				sp := sh.tcp_ports[uint(p)]
+				port_strings_by_state[sp.state] = append(port_strings_by_state[sp.state], state_color("tcp", sp.port, sp.state), " ")
+			}
+			for _, p := range sorted_udp_ports {
+				sp := sh.udp_ports[uint(p)]
+				port_strings_by_state[sp.state] = append(port_strings_by_state[sp.state], state_color("udp", sp.port, sp.state), " ")
+			}
+			// print lines
+			for _, state := range sorted_states {
+				color.Println(port_strings_by_state[state]...)
+			}
 		}
-		color.Println(args...)
 	}
 }
 
@@ -141,13 +183,11 @@ func main() {
 	flag_syn := flag.Bool("syn", false, "use syn tcp tests (needs root priviledges)")
 	flag_v := flag.Bool("v", false, "print nmap output")
 	flag_d := flag.Bool("d", false, "print nmap xml output")
-	flag_s := flag.Bool("s", false, "short output of port, only colors, no state")
 	flag_conf := flag.String("conf", "", "load the given configuration file with profiles and environments")
 	flag.Parse()
 	
 	targets := flag.Args()
 	verbose = *flag_v
-	short = *flag_s
 	debug = *flag_d
 	use_syn_scan = *flag_syn
 	
