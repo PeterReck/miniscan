@@ -10,6 +10,7 @@ import (
 
 var debug = false
 var verbose = false
+var short = false
 var use_syn_scan = false
 
 func scan_hosts(hosts []string, tcpPorts []uint, udpPorts []uint) (map[string]scanned_host, error) {
@@ -119,15 +120,15 @@ func print_scanned_hosts(scanned_hosts map[string]scanned_host, explanation stri
 		sort.Ints(sorted_udp_ports)
 		
 		// print
-		if all_open {
+		if all_open || short {
 			// print a one-liner, all ports are open
 			for _, p := range sorted_tcp_ports {
 				sp := sh.tcp_ports[uint(p)]
-				args = append(args, color.BrGreen(fmt.Sprintf("%d", sp.port)), " ")
+				args = append(args, state_color("tcp", sp.port, sp.state), " ")
 			}
 			for _, p := range sorted_udp_ports {
 				sp := sh.udp_ports[uint(p)]
-				args = append(args, color.BrGreen(fmt.Sprintf("u%d", sp.port)), " ")
+				args = append(args, state_color("udp", sp.port, sp.state), " ")
 			}
 			color.Println(args...)
 		} else {
@@ -183,12 +184,14 @@ func main() {
 	flag_syn := flag.Bool("syn", false, "use syn tcp tests (needs root priviledges)")
 	flag_v := flag.Bool("v", false, "print nmap output")
 	flag_d := flag.Bool("d", false, "print nmap xml output")
+	flag_s := flag.Bool("s", false, "short output of port, only colors, no state, all in one line")
 	flag_conf := flag.String("conf", "", "load the given configuration file with profiles and environments")
 	flag.Parse()
 	
 	targets := flag.Args()
 	verbose = *flag_v
 	debug = *flag_d
+	short = *flag_s
 	use_syn_scan = *flag_syn
 	
 	if (len(tcpPorts)==0 && len(udpPorts)==0 && *flag_conf=="") || len(targets)==0 {
