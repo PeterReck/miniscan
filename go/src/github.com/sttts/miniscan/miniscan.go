@@ -93,10 +93,13 @@ func state_color(protocol string, port uint, state string) (msg color.ColorMsg) 
 }
 
 func print_scanned_hosts(scanned_hosts map[string]scanned_host, explanation string) {
-	
-	color.Println(explanation + ":")
+	prefix := ""
+	if explanation != "" {
+		color.Println(explanation + ":")
+		prefix = "  "
+	}
 	for _, sh := range scanned_hosts {
-		args := [](interface{}){ "  " + sh.name + ": " }
+		args := [](interface{}){ prefix + sh.name + ": " }
 		
 		// sort and check tcp ports
 		all_open := true
