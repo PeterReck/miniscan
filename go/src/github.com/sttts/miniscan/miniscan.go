@@ -95,7 +95,7 @@ func state_color(protocol string, port uint, state string) (msg color.ColorMsg) 
 	return color.BrYellow(s)
 }
 
-func print_scanned_hosts(scanned_hosts map[string]scanned_host, explanation string) {
+func print_scanned_hosts(scanned_hosts map[string]scanned_host, explanation string, config *Config) {
 	prefix := ""
 	if explanation != "" {
 		color.Println(explanation + ":")
@@ -168,10 +168,24 @@ func print_scanned_hosts(scanned_hosts map[string]scanned_host, explanation stri
 			for _, p := range sorted_tcp_ports {
 				sp := sh.tcp_ports[uint(p)]
 				port_strings_by_state[sp.state] = append(port_strings_by_state[sp.state], state_color("tcp", sp.port, sp.state), " ")
+				
+				// port description?
+				description, described := config.descriptions[fmt.Sprintf("%d", sp.port)]
+				if described {
+					s := color.White("(" + description + ") ")
+					port_strings_by_state[sp.state] = append(port_strings_by_state[sp.state], s)
+				}
 			}
 			for _, p := range sorted_udp_ports {
 				sp := sh.udp_ports[uint(p)]
 				port_strings_by_state[sp.state] = append(port_strings_by_state[sp.state], state_color("udp", sp.port, sp.state), " ")
+			
+				// port description?
+				description, described := config.descriptions[fmt.Sprintf("u%d", sp.port)]
+				if described {
+					s := color.White("(" + description + ") ")
+					port_strings_by_state[sp.state] = append(port_strings_by_state[sp.state], s)
+				}
 			}
 			// print lines
 			for _, state := range sorted_states {
@@ -199,7 +213,11 @@ Example configuration:
 
   [home]
   webserver=google.com,google.de
-  domain=8.8.8.8,8.8.4.4`)
+  domain=8.8.8.8,8.8.4.4
+  
+  [descriptions]
+  80=http
+  443=https`)
 	}
 
 func main() {
@@ -262,7 +280,7 @@ func main() {
     			if (err != nil) {
     				color.Println(color.Red(err.Error()))
     			}
-    			print_scanned_hosts(scanned_hosts, profile_name)
+    			print_scanned_hosts(scanned_hosts, profile_name, config)
     		}
     	}
     } else {
@@ -275,6 +293,6 @@ func main() {
 			color.Println(color.Red(err.Error()))
 			os.Exit(1)
 		}
-		print_scanned_hosts(scanned_hosts, "")
+		print_scanned_hosts(scanned_hosts, "", empty_config())
 	}	
 }

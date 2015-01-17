@@ -24,6 +24,16 @@ type Environment struct {
 type Config struct {
 	profiles map[string]Profile
 	environments map[string]Environment
+	descriptions map[string]string
+}
+
+func empty_config () *Config {
+	config := Config{
+		profiles: make(map[string]Profile),
+		environments: map[string]Environment{},
+		descriptions: map[string]string{},
+	}
+	return &config
 }
 
 func read_config(file_name string) (*Config, error) {
@@ -33,10 +43,7 @@ func read_config(file_name string) (*Config, error) {
 		return nil, err
 	}
 	
-	config := Config{
-		profiles: make(map[string]Profile),
-		environments: map[string]Environment{},
-	}
+	config := empty_config()
 	read_profiles, err := read_config.SectionOptions("profiles")
 	if err != nil {
 		log.Println(err.Error())
@@ -80,7 +87,7 @@ func read_config(file_name string) (*Config, error) {
 	
 	// parse environments
 	for _, section_name := range read_config.Sections() {
-		if section_name != "profiles" {
+		if section_name != "profiles" && section_name != "descriptions" {
 			profile_names, _ := read_config.SectionOptions(section_name)
 			hosts_per_profile := map[string][]string{}
 			for _, profile_name := range profile_names {
@@ -106,5 +113,14 @@ func read_config(file_name string) (*Config, error) {
 		}
 	}
 	
-	return &config, nil
+	// parse descriptions
+	read_descriptions, err := read_config.SectionOptions("descriptions")
+	if err == nil {
+		for _, port_name := range read_descriptions {
+			description, _ := read_config.String("descriptions", port_name)
+			config.descriptions[port_name] = description
+		}
+	}
+	
+	return config, nil
 }
