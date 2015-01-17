@@ -84,12 +84,15 @@ func contains(s []string, e string) bool {
 
 func state_color(protocol string, port uint, state string) (msg color.ColorMsg) {
 	s := fmt.Sprintf("%d", port)
+	if protocol == "udp" {
+		s = "u" + s
+	}
 	if contains(OPEN_STATUS[protocol], state) {
 		return color.BrGreen(s)
 	} else if contains(CLOSED_STATUS[protocol], state) {
 		return color.BrRed(s)
 	}
-	return color.BrYellow(s)	
+	return color.BrYellow(s)
 }
 
 func print_scanned_hosts(scanned_hosts map[string]scanned_host, explanation string) {
