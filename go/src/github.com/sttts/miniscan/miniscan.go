@@ -181,6 +181,27 @@ func print_scanned_hosts(scanned_hosts map[string]scanned_host, explanation stri
 	}
 }
 
+func help() {
+	println(os.Args[0] + " -p TCP_PORT1 ... -u UDP_PORT1 ... HOST1 HOST2...")
+	println(os.Args[0] + " -conf CONFIG_FILE ENVIRONMENT...")
+	println()
+	flag.PrintDefaults()
+	println(`
+Examples:
+  ` + os.Args[0] + ` -p 80 -p 443 google.com
+  ` + os.Args[0] + ` -u 53 8.8.8.8 8.8.4.4
+  ` + os.Args[0] + ` -conf network.ini google
+
+Example configuration:
+  [profiles]
+  webserver=80,443
+  domain=u53
+
+  [home]
+  webserver=google.com,google.de
+  domain=8.8.8.8,8.8.4.4`)
+	}
+
 func main() {
 	var tcpPorts uintslice
 	var udpPorts uintslice
@@ -205,10 +226,10 @@ func main() {
 			color.Println(color.Red("Error: Either -p, -u or -conf is mandatory"))
     	    println()
     	}    
-        flag.PrintDefaults()
+        help()
     } else if (len(tcpPorts)>0 || len(udpPorts)>0) && *flag_conf!="" {
     	color.Println(color.Red("Error: use port or configuration, not both"))
-    	flag.PrintDefaults()
+    	help()
     } else if (*flag_conf!="") {
     	// targets are environments from here on
     	environment_names := targets
